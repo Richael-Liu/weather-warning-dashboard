@@ -38,6 +38,7 @@ from matplotlib.path import Path as MplPath
 from matplotlib.patches import Rectangle, FancyBboxPatch, PathPatch, ConnectionPatch
 from matplotlib import font_manager
 from matplotlib.font_manager import FontProperties
+from mplfonts import use_font
 
 try:
     from zoneinfo import ZoneInfo
@@ -234,6 +235,14 @@ def _is_file_path(out_path) -> bool:
 
 
 def setup_font():
+    """Use the CJK font bundled with mplfonts before falling back to system fonts."""
+    try:
+        use_font("Noto Sans CJK SC")
+        plt.rcParams["axes.unicode_minus"] = False
+        return
+    except Exception:
+        pass
+
     candidates = [
         "C:/Windows/Fonts/msyh.ttc",
         "C:/Windows/Fonts/msyh.ttf",
