@@ -38,7 +38,7 @@ from matplotlib.path import Path as MplPath
 from matplotlib.patches import Rectangle, FancyBboxPatch, PathPatch, ConnectionPatch
 from matplotlib import font_manager
 from matplotlib.font_manager import FontProperties
-from mplfonts import use_font
+from mplfonts.conf import FONT_DIR as MPLFONTS_FONT_DIR
 
 try:
     from zoneinfo import ZoneInfo
@@ -235,33 +235,29 @@ def _is_file_path(out_path) -> bool:
 
 
 def setup_font():
-    """Use the CJK font bundled with mplfonts before falling back to system fonts."""
-    try:
-        use_font("Noto Sans CJK SC")
-        plt.rcParams["axes.unicode_minus"] = False
-        return
-    except Exception:
-        pass
-
+    """Register a bundled CJK font before falling back to system fonts."""
     candidates = [
-        "C:/Windows/Fonts/msyh.ttc",
-        "C:/Windows/Fonts/msyh.ttf",
-        "C:/Windows/Fonts/simhei.ttf",
-        "C:/Windows/Fonts/simsun.ttc",
-        "/System/Library/Fonts/PingFang.ttc",
-        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-        "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+        *sorted(Path(MPLFONTS_FONT_DIR).glob("*.otf")),
+        *sorted(Path(MPLFONTS_FONT_DIR).glob("*.ttf")),
+        Path("C:/Windows/Fonts/msyh.ttc"),
+        Path("C:/Windows/Fonts/msyh.ttf"),
+        Path("C:/Windows/Fonts/simhei.ttf"),
+        Path("C:/Windows/Fonts/simsun.ttc"),
+        Path("/System/Library/Fonts/PingFang.ttc"),
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"),
     ]
     chosen_name = None
     for fp in candidates:
-        if Path(fp).exists():
+        if fp.exists():
             try:
-                font_manager.fontManager.addfont(fp)
-                chosen_name = FontProperties(fname=fp).get_name()
+                font_manager.fontManager.addfont(str(fp))
+                chosen_name = FontProperties(fname=str(fp)).get_name()
                 break
             except Exception:
-                pass
+                continue
     if chosen_name:
+        plt.rcParams["font.family"] = "sans-serif"
         plt.rcParams["font.sans-serif"] = [chosen_name, "Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "DejaVu Sans"]
     else:
         plt.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "DejaVu Sans"]
